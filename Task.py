@@ -22,5 +22,5 @@ async def shutdown():
 async def get_tracks_page(page: int = 0, per_page: int = 10):
     app.db_connection.row_factory = sqlite3.Row
     tracks_page = app.db_connection.execute(
-        "SELECT * FROM tracks LIMIT ? OFFSET ? ORDERBY trackid", (per_page, per_page*page)).fetchall()
+        "SELECT * FROM tracks LIMIT ? OFFSET ?", (per_page, per_page*page)).fetchall()
     return tracks_page
