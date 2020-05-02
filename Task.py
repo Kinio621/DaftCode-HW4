@@ -18,19 +18,9 @@ async def startup():
 async def shutdown():
     app.db_connection.close()
 
-
-@app.get("/")
-async def root():
-    cursor = app.db_connection.cursor()
-    tracks = cursor.execute("SELECT name FROM tracks").fetchall()
-    return {
-        "tracks":tracks,
-    }
-
 @app.get("/tracks")
-async def single_track(page: int = 0, per_page: int = 10):
+async def get_tracks_page(page: int = 0, per_page: int = 10):
     app.db_connection.row_factory = sqlite3.Row
-    data = app.db_connection.execute(
-        "SELECT Trackid, Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, Bytes, UnitPrice FROM tracks ORDERBY Trackid LIMIT ? OFFSET ?", (per_page, per_page*page)).fetchone()
-
-    return data
+    tracks_page = app.db_connection.execute(
+        "SELECT * FROM tracks LIMIT ? OFFSET ? ORDERBY trackid", (per_page, per_page*page)).fetchall()
+    return tracks_page
