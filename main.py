@@ -78,6 +78,6 @@ async def edit_customer(customer_id: int, request: CustomerRQ):
         "SELECT * FROM customers WHERE CustomerId = ? LIMIT 1", (customer_id,)).fetchall()
     if customer_check == []: raise HTTPException(status_code=404, detail=json.dumps({"error": "No customer with such ID"}))
     update_data = request.dict(exclude_unset=True)
-    for item in request.__dict__:
-        app.db_connection.execute(f'UPDATE customers SET {item} = "{request.__dict__[item]}" WHERE CustomerId = {customer_id}')
+    for item in update_data.__dict__:
+        app.db_connection.execute(f'UPDATE customers SET {item} = "{update_data.__dict__[item]}" WHERE CustomerId = {customer_id}')
     return app.db_connection.execute("SELECT * FROM customers WHERE CustomerId = ?",(customer_id,)).fetchone()
