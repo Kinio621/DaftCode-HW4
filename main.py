@@ -9,10 +9,13 @@ import sqlite3
 
 app = FastAPI()
 
+class AlbumRQ(BaseModel):
+    title: str
+    artist_id: int
+
 @app.on_event("startup")
 async def startup():
     app.db_connection = sqlite3.connect('chinook.db')
-
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -39,3 +42,16 @@ async def get_composer_tracks(composer_name: str):
     if composer_tracks==[]:
         raise HTTPException(status_code=404, detail=json.dumps({"error": "No composer to be found"}))
     return composer_tracks
+
+@app.post("/albums")
+async def add_album(request: AlbumRQ, response: Response):
+    app.db_connection.row_factory = lambda cursor, x: x[0]
+    artist_check = app.db_connection.execute(
+        "SELECT * FROM albums WHERE artistid = ? LIMIT 1", (request.artist_id, )).fetchone()
+    if artist_check==[]:
+        raise HTTPException(status_code=404, detail=json.dumps({"error": "No artist with such ID"}))
+    app.db_connection.execute(
+        "INSERT INTO albums (artistid, title) VALUES (?,?)",(request.artist_id,request.title,)).fetchone()
+    album = app.db_connection.execute("SELECT * FROM albums WHERE artistid = ? ORDER BY AlbumId DESC LIMIT 1",(request.artist_id,)).fetchone()
+    response.status_code = 201
+    return album
