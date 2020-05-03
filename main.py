@@ -72,12 +72,14 @@ async def get_album(album_id: int):
         "SELECT * FROM albums WHERE AlbumId = ?",(album_id,)).fetchone()
 
 @app.put("/customers/{customer_id}")
-async def edit_customer(customer_id: int, request: CustomerRQ):
-    app.db_connection.row_factory = sqlite3.Row
-    customer_check = app.db_connection.execute(
-        "SELECT * FROM customers WHERE CustomerId = ? LIMIT 1", (customer_id,)).fetchall()
-    if customer_check == []: raise HTTPException(status_code=404, detail=json.dumps({"error": "No customer with such ID"}))
-    update_data = request.dict(exclude_unset=True)
-    for item in request.__dict__:
-        app.db_connection.execute(f'UPDATE customers SET {item} = "{request.__dict__[item]}" WHERE CustomerId = {customer_id}')
-    return app.db_connection.execute("SELECT * FROM customers WHERE CustomerId = ?",(customer_id,)).fetchone()
+def put_customer(request:CustomerRQ,customer_id:int):
+	with sqlite3.connect('chinook.db') as connection:
+		connection.row_factory = sqlite3.Row
+		cursor = connection.cursor()
+		client = cursor.execute('SELECT CustomerId FROM customers WHERE CustomerId=?',(customer_id,)).fetchall()
+		if not client : raise HTTPException(404,detail=json.dumps({'error':'Client does not exist'}))
+		for x in request.__dict__:
+			if request.__dict__[x]:
+				cursor.execute(f'UPDATE customers SET {x}="{request.__dict__[x]}" WHERE CustomerId={customer_id}')
+		a=cursor.execute("SELECT * FROM customers WHERE CustomerId=?",(customer_id,)).fetchone()
+		return a;
