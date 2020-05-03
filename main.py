@@ -13,6 +13,15 @@ class AlbumRQ(BaseModel):
     title: str
     artist_id: int
 
+class CustomerRQ(BaseModel):
+    company: str = ''
+    address: str = ''
+    city: str = ''
+    state: str = ''
+    country: str = ''
+    postalcode: str = ''
+    fax: str = ''
+
 @app.on_event("startup")
 async def startup():
     app.db_connection = sqlite3.connect('chinook.db')
@@ -61,3 +70,14 @@ async def get_album(album_id: int):
     app.db_connection.row_factory = sqlite3.Row
     return app.db_connection.execute(
         "SELECT * FROM albums WHERE AlbumId = ?",(album_id,)).fetchone()
+
+@app.put("/customers/{customer_id}")
+async def edit_customer(customer_id: int, request: CustomerRQ):
+    app.db_connection.row_factory = sqlite3.Row
+    customer_check = app.db_connection.execute(
+        "SELECT * FROM customers WHERE CustomerId = ? LIMIT 1", (customer_id,)).fetchall()
+    if customer_check == []: raise HTTPException(status_code=404, detail=json.dumps({"error": "No customer with such ID"}))
+    update_data = request.dict(exclude_unset=True)
+    for item in request.__dict__:
+        app.db_connection.execute(f'UPDATE customers SET {item} = "{request.__dict__[item]}" WHERE CustomerId = {customer_id}')
+    return app.db_connection.execute("SELECT * FROM customers WHERE CustomerId = ?",(customer_id,)).fetchone()
