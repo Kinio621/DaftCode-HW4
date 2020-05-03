@@ -33,9 +33,9 @@ async def get_tracks_page(page: int = 0, per_page: int = 10):
 
 @app.get("/tracks/composers/")
 async def get_composer_tracks(composer_name: str):
-    app.db_connection.row_factory = sqlite3.Row
+    app.db_connection.row_factory = lambda cursor, x: x[0]
     composer_tracks = app.db_connection.execute(
         "SELECT Name FROM tracks WHERE Composer = ? ORDER BY Name", (composer_name, )).fetchall()
-    if len(composer_tracks)==0:
+    if composer_tracks==[]:
         raise HTTPException(status_code=404, detail=json.dumps({"error": "No composer to be found"}))
     return composer_tracks
