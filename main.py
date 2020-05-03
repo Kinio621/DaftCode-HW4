@@ -3,7 +3,7 @@ from fastapi import FastAPI, Response, Request, Cookie, HTTPException, status, D
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-
+import json
 import secrets
 import sqlite3
 
@@ -31,9 +31,11 @@ async def get_tracks_page(page: int = 0, per_page: int = 10):
         "SELECT * FROM tracks LIMIT ? OFFSET ?", (per_page, per_page*page)).fetchall()
     return tracks_page
 
-@app.get("/tracks/composers")
-def get_composers(composer_name :str ):
+@app.get("/tracks/composers/")
+async def get_composer_tracks(composer_name: str):
     app.db_connection.row_factory = sqlite3.Row
-    composers = app.db_connection.execute("SELECT Name FROM tracks WHERE Composer=? ORDER BY Name",(composer_name,)).fetchall()
-    if composers == [] : raise HTTPException(404,detail=json.dumps({'error':'Composer does not exist'}))
-    return composers
+    composer_tracks = app.db_connection.execute(
+        "SELECT Name FROM tracks WHERE Composer = ? ORDER BY Name", (composer_name, )).fetchall()
+    if composer_tracks==[]:
+        raise HTTPException(status_code=404, detail=json.dumps({"error": "No composer to be found"}))
+    return composer_tracks
