@@ -60,4 +60,4 @@ async def add_album(request: AlbumRQ, response: Response):
 async def get_album(album_id: int):
     app.db_connection.row_factory = sqlite3.Row
     return app.db_connection.execute(
-        "SELECT * FROM albums WHERE AlbumId = ?",(album_id,)).fetchall()
+        "SELECT * FROM albums WHERE AlbumId = ?",(album_id,)).fetchone()
