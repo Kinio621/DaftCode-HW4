@@ -45,13 +45,19 @@ async def get_composer_tracks(composer_name: str):
 
 @app.post("/albums")
 async def add_album(request: AlbumRQ, response: Response):
-    app.db_connection.row_factory = lambda cursor, x: x[0]
+    app.db_connection.row_factory = sqlite3.Row
     artist_check = app.db_connection.execute(
-        "SELECT * FROM albums WHERE artistid = ? LIMIT 1", (request.artist_id, )).fetchone()
+        "SELECT * FROM albums WHERE artistid = ? LIMIT 1", (request.artist_id, )).fetchall()
     if artist_check==[]:
         raise HTTPException(status_code=404, detail=json.dumps({"error": "No artist with such ID"}))
     app.db_connection.execute(
-        "INSERT INTO albums (artistid, title) VALUES (?,?)",(request.artist_id,request.title,)).fetchone()
-    album = app.db_connection.execute("SELECT * FROM albums WHERE artistid = ? ORDER BY AlbumId DESC LIMIT 1",(request.artist_id,)).fetchone()
+        "INSERT INTO albums (artistid, title) VALUES (?,?)",(request.artist_id,request.title,))
+    album = app.db_connection.execute("SELECT * FROM albums WHERE artistid = ? ORDER BY AlbumId DESC",(request.artist_id,)).fetchone()
     response.status_code = 201
     return album
+
+@app.get("/albums/{album_id}")
+async def get_album(album_id: int):
+    app.db_connection.row_factory = sqlite3.Row
+    return app.db_connection.execute(
+        "SELECT * FROM albums WHERE AlbumId = ?",(album_id,)).fetchall()
