@@ -36,6 +36,6 @@ async def get_composer_tracks(composer_name: str):
     app.db_connection.row_factory = sqlite3.Row
     composer_tracks = app.db_connection.execute(
         "SELECT Name FROM tracks WHERE Composer = ? ORDER BY Name", (composer_name, )).fetchall()
-    if composer_tracks==[]:
+    if len(composer_tracks)==0:
         raise HTTPException(status_code=404, detail=json.dumps({"error": "No composer to be found"}))
     return composer_tracks
