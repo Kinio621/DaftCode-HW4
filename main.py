@@ -49,7 +49,7 @@ async def get_composer_tracks(composer_name: str):
     composer_tracks = app.db_connection.execute(
         "SELECT Name FROM tracks WHERE Composer = ? ORDER BY Name", (composer_name, )).fetchall()
     if composer_tracks==[]:
-        raise HTTPException(status_code=404, detail=json.dumps({"error": "No composer to be found"}))
+        raise HTTPException(status_code=404, detail={"error": "No composer to be found"})
     return composer_tracks
 
 @app.post("/albums")
@@ -58,7 +58,7 @@ async def add_album(request: AlbumRQ, response: Response):
     artist_check = app.db_connection.execute(
         "SELECT * FROM albums WHERE artistid = ? LIMIT 1", (request.artist_id, )).fetchall()
     if artist_check==[]:
-        raise HTTPException(status_code=404, detail=json.dumps({"error": "No artist with such ID"}))
+        raise HTTPException(status_code=404, detail={"error": "No artist with such ID"})
     app.db_connection.execute(
         "INSERT INTO albums (artistid, title) VALUES (?,?)",(request.artist_id,request.title,))
     album = app.db_connection.execute("SELECT * FROM albums WHERE artistid = ? ORDER BY AlbumId DESC",(request.artist_id,)).fetchone()
@@ -76,8 +76,21 @@ async def edit_customer(customer_id: int, request: CustomerRQ):
     app.db_connection.row_factory = sqlite3.Row
     customer_check = app.db_connection.execute(
         "SELECT * FROM customers WHERE CustomerId = ? LIMIT 1", (customer_id,)).fetchall()
-    if customer_check == []: raise HTTPException(status_code=404, detail=json.dumps({"error": "No customer with such ID"}))
+    if customer_check == []: raise HTTPException(status_code=404, detail={"error": "No customer with such ID"})
     update_data = request.dict(exclude_unset=True)
     for item in update_data:
         app.db_connection.execute(f'UPDATE customers SET {item} = "{update_data[item]}" WHERE CustomerId = {customer_id}')
     return app.db_connection.execute("SELECT * FROM customers WHERE CustomerId = ?",(customer_id,)).fetchone()
+
+@app.get("/sales")
+async def get_sales(category: str):
+    if category=='customers':
+        app.db_connection.row_factory = sqlite3.Row
+        data = app.db_connection.execute(
+            "SELECT customers.CustomerId,customers.Email,customers.Phone, "
+            "ROUND(SUM(invoices.Total),2) Sum FROM invoices "
+            "INNER JOIN customers ON invoices.CustomerId = customers.CustomerId "
+            "GROUP BY customers.CustomerId,customers.Email,customers.Phone "
+            "ORDER BY Sum DESC, customers.CustomerId").fetchall()
+        return data
+    else: raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "No category to be found"})
