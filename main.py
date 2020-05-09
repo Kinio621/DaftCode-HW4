@@ -99,6 +99,6 @@ async def get_sales(category: str):
             "SELECT genres.Name, SUM(invoice_items.Quantity) AS SUM FROM genres "
             "INNER JOIN tracks ON tracks.GenreId = genres.GenreId "
             "INNER JOIN invoice_items ON invoice_items.TrackId = tracks.TrackId "
-            "GROUP BY genres.Name ORDER BY Sum DESC, genres.Name ").fetchall()
+            "GROUP BY genres.Name ORDER BY SUM DESC, genres.Name ").fetchall()
         return data
     else: raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "No category to be found"})
