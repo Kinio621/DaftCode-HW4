@@ -93,4 +93,12 @@ async def get_sales(category: str):
             "GROUP BY customers.CustomerId,customers.Email,customers.Phone "
             "ORDER BY Sum DESC, customers.CustomerId").fetchall()
         return data
+    elif category=='genres':
+        app.db_connection.row_factory = sqlite3.Row
+        data = app.db_connection.execute(
+            "SELECT genres.Name, SUM(invoice_items.Quantity) AS SUM FROM genres"
+            "INNER JOIN tracks ON tracks.GenreId = genres.GenreId"
+            "INNER JOIN invoice_items ON invoice_items.TrackId = tracks.TrackId"
+            "GROUP BY genres.Name ORDER BY Sum DESC, genres.Name ").fetchall()
+        return data
     else: raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "No category to be found"})
